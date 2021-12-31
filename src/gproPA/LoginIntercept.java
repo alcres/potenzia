@@ -4,17 +4,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import model.*;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.FormElement;
 import org.jsoup.select.Elements;
-
-import model.Coche;
-import model.Niveles;
-import model.NivelesFin;
-import model.Vuelta;
 
 public class LoginIntercept {
 	// # Constants used in this example
@@ -50,15 +46,34 @@ public class LoginIntercept {
 		// System.out.print(positionResponse.parse().html());
 		Document doc = Jsoup.parse(positionResponse.parse().html());
 
-
-
 		Elements coche = doc.select("table.styled.bordered.center");
-		Element c = coche.get(0);
-		Elements trs = c.select("tr");
-		String[][] trtd = new String[trs.size()][];
 		Coche car = new Coche();
 		Niveles nivelInicio = new Niveles();
 		NivelesFin nivelesFin = new NivelesFin();
+		getDesgastesyNiveles(coche, car, nivelInicio, nivelesFin);
+		// System.out.print(masthead.html());
+		Elements masthead = doc.select("table.borderbottom");
+		Element table = masthead.get(0);
+
+		List<Vuelta> vueltas = getVueltas(masthead);
+
+		for (Vuelta v : vueltas) {
+			System.out.print(v.getVuelta() + " | ");
+			System.out.print(v.getTiempo() + " | ");
+			System.out.print(v.getTemp() + " | ");
+			System.out.println(v.getClima());
+		}
+		Elements practicas = doc.select("table.styled.borderbottom.flag");
+		List<VueltasPractica> vueltaPracticas = getVueltasPracticas(practicas);
+
+
+	}
+
+	private void getDesgastesyNiveles(Elements coche, Coche car, Niveles nivelInicio, NivelesFin nivelesFin) {
+		Element c = coche.get(0);
+		Elements trs = c.select("tr");
+		String[][] trtd = new String[trs.size()][];
+
 		for (int i = 2; i < trs.size(); i++) {
 			Elements tds = trs.get(i).select("td");
 			trtd[i] = new String[tds.size()];
@@ -212,20 +227,58 @@ public class LoginIntercept {
 				}
 			}
 		}
-		// System.out.print(masthead.html());
-			Elements masthead = doc.select("table.borderbottom");
-		Element table = masthead.get(0);
-
-
-		List<Vuelta> vueltas = getVueltas(masthead);
-
-		for (Vuelta v : vueltas) {
-			System.out.print(v.getVuelta() + " | ");
-			System.out.print(v.getTiempo() + " | ");
-			System.out.print(v.getTemp() + " | ");
-			System.out.println(v.getClima());
-		}
 	}
+
+	private List<VueltasPractica> getVueltasPracticas(Elements masthead) {
+		Element lapsPractice = masthead.get(0);
+		List<VueltasPractica> vueltas = new ArrayList<>();
+		Elements trs = lapsPractice.select("tr");
+		String[][] trtd = new String[trs.size()][];
+		for (int i = 4; i < trs.size(); i++) {
+			Elements tds = trs.get(i).select("td");
+			trtd[i] = new String[tds.size()];
+			VueltasPractica v = new VueltasPractica();
+
+			for (int j = 0; j < tds.size(); j++) {
+				if (j == 0) {
+					v.setVuelta(tds.get(j).text());
+				}
+				if (j == 1) {
+					v.setTimepo(tds.get(j).text());
+				}
+				if (j == 2) {
+					v.setErrorPiloto(tds.get(j).text());
+				}
+				if (j == 3) {
+					v.setTimepoNeto(tds.get(j).text());
+				}
+				if (j == 4) {
+					v.setAleD(Integer.parseInt(tds.get(j).text()));
+				}
+				if (j == 5) {
+					v.setAleT(Integer.parseInt(tds.get(j).text()));
+				}
+				if (j == 6) {
+					v.setMotor(Integer.parseInt(tds.get(j).text()));
+				}
+				if (j == 7) {
+					v.setFrenos(Integer.parseInt(tds.get(j).text()));
+				}
+				if (j == 8) {
+					v.setCaja(Integer.parseInt(tds.get(j).text()));
+				}
+				if (j == 9) {
+					v.setSuspension(Integer.parseInt(tds.get(j).text()));
+				}
+				if (j == 10) {
+					v.setNeumatico(tds.get(j).text());
+				}
+			}
+			vueltas.add(v);
+		}
+		return vueltas;
+	}
+
 
 	private List<Vuelta> getVueltas(Elements masthead) {
 		//GET RACE LAPS ANALISYS
